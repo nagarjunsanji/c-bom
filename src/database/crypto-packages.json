@@ -1,0 +1,509 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-16",
+  "algorithms": {
+    "MD5": {
+      "type": "hash",
+      "risk": "critical",
+      "quantumVulnerable": false,
+      "oid": "1.2.840.113549.2.5",
+      "notes": "Collision resistance is completely broken; must not be used for security."
+    },
+    "SHA-1": {
+      "type": "hash",
+      "risk": "high",
+      "quantumVulnerable": false,
+      "oid": "1.3.14.3.2.26",
+      "notes": "Practical collision attacks exist (SHAttered)."
+    },
+    "SHA-256": {
+      "type": "hash",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 2,
+      "oid": "2.16.840.1.101.3.4.2.1"
+    },
+    "SHA-384": {
+      "type": "hash",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 4,
+      "oid": "2.16.840.1.101.3.4.2.2"
+    },
+    "SHA-512": {
+      "type": "hash",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 5,
+      "oid": "2.16.840.1.101.3.4.2.3"
+    },
+    "SHA-3": { "type": "hash", "risk": "low", "quantumVulnerable": false },
+    "BLAKE2": { "type": "hash", "risk": "low", "quantumVulnerable": false },
+    "BLAKE3": { "type": "hash", "risk": "low", "quantumVulnerable": false },
+    "RIPEMD-160": { "type": "hash", "risk": "medium", "quantumVulnerable": false },
+    "Keccak": { "type": "hash", "risk": "low", "quantumVulnerable": false },
+    "CRC32": {
+      "type": "checksum",
+      "risk": "high",
+      "quantumVulnerable": false,
+      "notes": "Non-cryptographic checksum; provides no integrity guarantee against attackers."
+    },
+    "MurmurHash": { "type": "checksum", "risk": "medium", "quantumVulnerable": false },
+    "HMAC": { "type": "mac", "risk": "low", "quantumVulnerable": false },
+    "Poly1305": { "type": "mac", "risk": "low", "quantumVulnerable": false },
+    "AES-128": {
+      "type": "symmetric",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 1,
+      "oid": "2.16.840.1.101.3.4.1.2",
+      "notes": "Grover's algorithm halves the effective key strength to 64 bits; prefer AES-256."
+    },
+    "AES-256": {
+      "type": "symmetric",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 5,
+      "oid": "2.16.840.1.101.3.4.1.42"
+    },
+    "AES-GCM": {
+      "type": "aead",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 5,
+      "oid": "2.16.840.1.101.3.4.1.46"
+    },
+    "AES-CBC": {
+      "type": "symmetric",
+      "risk": "medium",
+      "quantumVulnerable": false,
+      "notes": "Requires a separate MAC; padding-oracle prone when used unauthenticated."
+    },
+    "ChaCha20-Poly1305": {
+      "type": "aead",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 5
+    },
+    "Salsa20": {
+      "type": "symmetric",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "primitive": "stream-cipher"
+    },
+    "XSalsa20": {
+      "type": "symmetric",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "primitive": "stream-cipher"
+    },
+    "DES": {
+      "type": "symmetric",
+      "risk": "critical",
+      "quantumVulnerable": false,
+      "notes": "56-bit key, brute-forceable."
+    },
+    "3DES": {
+      "type": "symmetric",
+      "risk": "high",
+      "quantumVulnerable": false,
+      "notes": "Deprecated by NIST (SP 800-131A); Sweet32 birthday attacks."
+    },
+    "RC4": {
+      "type": "symmetric",
+      "risk": "critical",
+      "quantumVulnerable": false,
+      "primitive": "stream-cipher",
+      "notes": "Biased keystream; prohibited in TLS by RFC 7465."
+    },
+    "Blowfish": { "type": "symmetric", "risk": "high", "quantumVulnerable": false },
+    "RSA": {
+      "type": "public-key",
+      "risk": "medium",
+      "quantumVulnerable": true,
+      "oid": "1.2.840.113549.1.1.1",
+      "notes": "Broken by Shor's algorithm; migrate to ML-KEM / ML-DSA."
+    },
+    "RSA-PSS": { "type": "signature", "risk": "medium", "quantumVulnerable": true },
+    "RSA-OAEP": { "type": "public-key", "risk": "medium", "quantumVulnerable": true },
+    "RSA-PKCS1v1_5": {
+      "type": "public-key",
+      "risk": "high",
+      "quantumVulnerable": true,
+      "notes": "Bleichenbacher-style padding oracles; also Shor-vulnerable."
+    },
+    "DSA": { "type": "signature", "risk": "high", "quantumVulnerable": true },
+    "Diffie-Hellman": { "type": "key-exchange", "risk": "medium", "quantumVulnerable": true },
+    "ECDH": { "type": "key-exchange", "risk": "medium", "quantumVulnerable": true },
+    "ECDSA": {
+      "type": "signature",
+      "risk": "medium",
+      "quantumVulnerable": true,
+      "oid": "1.2.840.10045.2.1"
+    },
+    "Ed25519": {
+      "type": "signature",
+      "risk": "low",
+      "quantumVulnerable": true,
+      "oid": "1.3.101.112"
+    },
+    "X25519": {
+      "type": "key-exchange",
+      "risk": "low",
+      "quantumVulnerable": true,
+      "oid": "1.3.101.110"
+    },
+    "secp256k1": { "type": "signature", "risk": "medium", "quantumVulnerable": true },
+    "ElGamal": { "type": "public-key", "risk": "medium", "quantumVulnerable": true },
+    "PBKDF2": { "type": "kdf", "risk": "medium", "quantumVulnerable": false },
+    "bcrypt": { "type": "password-hash", "risk": "low", "quantumVulnerable": false },
+    "scrypt": { "type": "password-hash", "risk": "low", "quantumVulnerable": false },
+    "Argon2": { "type": "password-hash", "risk": "low", "quantumVulnerable": false },
+    "HKDF": { "type": "kdf", "risk": "low", "quantumVulnerable": false },
+    "ML-KEM": {
+      "type": "post-quantum-kem",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 3,
+      "oid": "2.16.840.1.101.3.4.4.2"
+    },
+    "ML-DSA": {
+      "type": "post-quantum-signature",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 3,
+      "oid": "2.16.840.1.101.3.4.3.18"
+    },
+    "SLH-DSA": {
+      "type": "post-quantum-signature",
+      "risk": "low",
+      "quantumVulnerable": false,
+      "nistQuantumSecurityLevel": 3
+    },
+    "JWT": { "type": "token", "risk": "medium", "quantumVulnerable": false },
+    "TLS": { "type": "protocol", "risk": "low", "quantumVulnerable": false },
+    "CSPRNG": { "type": "random", "risk": "low", "quantumVulnerable": false },
+    "PRNG": {
+      "type": "random",
+      "risk": "high",
+      "quantumVulnerable": false,
+      "notes": "Non-cryptographic randomness must never seed keys, tokens or IVs."
+    },
+    "Base64": {
+      "type": "encoding",
+      "risk": "high",
+      "quantumVulnerable": false,
+      "notes": "Encoding only, not encryption. Frequently misused as obfuscation."
+    }
+  },
+  "packages": [
+    {
+      "name": "crypto-js",
+      "category": "general-purpose",
+      "algorithms": ["AES-128", "AES-256", "AES-CBC", "3DES", "RC4", "MD5", "SHA-1", "SHA-256", "HMAC", "PBKDF2", "Base64"],
+      "risk": "high",
+      "deprecated": true,
+      "description": "Pure JS crypto toolkit. Ships legacy primitives and a weak default KDF.",
+      "url": "https://www.npmjs.com/package/crypto-js"
+    },
+    {
+      "name": "node-forge",
+      "category": "general-purpose",
+      "algorithms": ["RSA", "RSA-PKCS1v1_5", "AES-CBC", "AES-GCM", "3DES", "DES", "RC4", "MD5", "SHA-1", "SHA-256", "HMAC", "PBKDF2", "TLS"],
+      "risk": "medium",
+      "description": "Native implementation of TLS and many cryptographic utilities in JavaScript.",
+      "url": "https://www.npmjs.com/package/node-forge"
+    },
+    {
+      "name": "sodium-native",
+      "aliases": ["libsodium-wrappers", "libsodium", "tweetsodium"],
+      "category": "general-purpose",
+      "algorithms": ["XSalsa20", "ChaCha20-Poly1305", "Poly1305", "Ed25519", "X25519", "BLAKE2", "Argon2"],
+      "risk": "low",
+      "description": "Bindings to libsodium, a misuse-resistant modern crypto library.",
+      "url": "https://www.npmjs.com/package/sodium-native"
+    },
+    {
+      "name": "tweetnacl",
+      "aliases": ["tweetnacl-util", "nacl-fast"],
+      "category": "general-purpose",
+      "algorithms": ["XSalsa20", "Poly1305", "Ed25519", "X25519", "SHA-512"],
+      "risk": "low",
+      "description": "Port of TweetNaCl providing modern authenticated encryption and signatures.",
+      "url": "https://www.npmjs.com/package/tweetnacl"
+    },
+    {
+      "name": "bcrypt",
+      "aliases": ["bcryptjs", "bcrypt-nodejs"],
+      "category": "password-hashing",
+      "algorithms": ["bcrypt"],
+      "risk": "low",
+      "description": "Adaptive password hashing based on Blowfish.",
+      "url": "https://www.npmjs.com/package/bcrypt"
+    },
+    {
+      "name": "argon2",
+      "aliases": ["argon2-browser", "@node-rs/argon2"],
+      "category": "password-hashing",
+      "algorithms": ["Argon2"],
+      "risk": "low",
+      "description": "Winner of the Password Hashing Competition; recommended default.",
+      "url": "https://www.npmjs.com/package/argon2"
+    },
+    {
+      "name": "scrypt-js",
+      "aliases": ["scryptsy", "scrypt-async"],
+      "category": "password-hashing",
+      "algorithms": ["scrypt"],
+      "risk": "low",
+      "description": "Memory-hard password hashing / key derivation."
+    },
+    {
+      "name": "pbkdf2",
+      "category": "key-derivation",
+      "algorithms": ["PBKDF2", "SHA-1", "SHA-256", "HMAC"],
+      "risk": "medium",
+      "description": "Browserified PBKDF2; weak when iteration counts are low or SHA-1 is used."
+    },
+    {
+      "name": "hkdf",
+      "aliases": ["futoin-hkdf"],
+      "category": "key-derivation",
+      "algorithms": ["HKDF", "HMAC", "SHA-256"],
+      "risk": "low"
+    },
+    {
+      "name": "md5",
+      "aliases": ["md5-hex", "blueimp-md5", "spark-md5", "js-md5"],
+      "category": "hashing",
+      "algorithms": ["MD5"],
+      "risk": "critical",
+      "deprecated": true,
+      "description": "MD5 hashing. Unsuitable for any security purpose."
+    },
+    {
+      "name": "sha1",
+      "aliases": ["js-sha1", "sha.js"],
+      "category": "hashing",
+      "algorithms": ["SHA-1", "SHA-256"],
+      "risk": "high",
+      "description": "Legacy SHA-1 hashing."
+    },
+    {
+      "name": "js-sha256",
+      "aliases": ["sha256", "fast-sha256"],
+      "category": "hashing",
+      "algorithms": ["SHA-256", "HMAC"],
+      "risk": "low"
+    },
+    {
+      "name": "js-sha3",
+      "aliases": ["sha3", "keccak", "keccak256"],
+      "category": "hashing",
+      "algorithms": ["SHA-3", "Keccak"],
+      "risk": "low"
+    },
+    {
+      "name": "blake3",
+      "aliases": ["blakejs", "blake2b", "hash-wasm"],
+      "category": "hashing",
+      "algorithms": ["BLAKE2", "BLAKE3"],
+      "risk": "low"
+    },
+    {
+      "name": "hash.js",
+      "category": "hashing",
+      "algorithms": ["SHA-1", "SHA-256", "SHA-512", "RIPEMD-160", "HMAC"],
+      "risk": "medium"
+    },
+    {
+      "name": "crc",
+      "aliases": ["crc32", "buffer-crc32", "crc-32"],
+      "category": "hashing",
+      "algorithms": ["CRC32"],
+      "risk": "high",
+      "description": "Checksums only; not a cryptographic integrity mechanism."
+    },
+    {
+      "name": "murmurhash",
+      "aliases": ["murmurhash3js", "imurmurhash"],
+      "category": "hashing",
+      "algorithms": ["MurmurHash"],
+      "risk": "medium"
+    },
+    {
+      "name": "aes-js",
+      "category": "symmetric-encryption",
+      "algorithms": ["AES-128", "AES-256", "AES-CBC"],
+      "risk": "medium",
+      "description": "Raw AES modes without built-in authentication."
+    },
+    {
+      "name": "chacha20-universal",
+      "aliases": ["chacha20", "@stablelib/chacha20poly1305"],
+      "category": "symmetric-encryption",
+      "algorithms": ["ChaCha20-Poly1305", "Poly1305"],
+      "risk": "low"
+    },
+    {
+      "name": "node-rsa",
+      "category": "public-key",
+      "algorithms": ["RSA", "RSA-OAEP", "RSA-PKCS1v1_5", "SHA-256"],
+      "risk": "high",
+      "description": "Pure JS RSA. Quantum-vulnerable and historically unmaintained."
+    },
+    {
+      "name": "elliptic",
+      "category": "public-key",
+      "algorithms": ["ECDSA", "ECDH", "Ed25519", "secp256k1"],
+      "risk": "medium",
+      "description": "Pure JS elliptic curve cryptography; past nonce-handling CVEs."
+    },
+    {
+      "name": "@noble/curves",
+      "aliases": ["@noble/secp256k1", "@noble/ed25519", "noble-secp256k1"],
+      "category": "public-key",
+      "algorithms": ["ECDSA", "ECDH", "Ed25519", "X25519", "secp256k1"],
+      "risk": "low",
+      "description": "Audited, dependency-free elliptic curve implementations."
+    },
+    {
+      "name": "@noble/hashes",
+      "category": "hashing",
+      "algorithms": ["SHA-256", "SHA-512", "SHA-3", "BLAKE2", "BLAKE3", "HMAC", "HKDF", "PBKDF2", "scrypt", "Argon2"],
+      "risk": "low"
+    },
+    {
+      "name": "@noble/ciphers",
+      "category": "symmetric-encryption",
+      "algorithms": ["AES-GCM", "AES-256", "ChaCha20-Poly1305", "Salsa20"],
+      "risk": "low"
+    },
+    {
+      "name": "openpgp",
+      "category": "public-key",
+      "algorithms": ["RSA", "ElGamal", "ECDH", "ECDSA", "Ed25519", "AES-256", "SHA-256"],
+      "risk": "medium",
+      "description": "OpenPGP.js message encryption and signing."
+    },
+    {
+      "name": "jsonwebtoken",
+      "aliases": ["jwt-simple", "jwt-decode"],
+      "category": "token",
+      "algorithms": ["JWT", "HMAC", "RSA-PKCS1v1_5", "RSA-PSS", "ECDSA", "SHA-256"],
+      "risk": "medium",
+      "description": "JWT signing/verification; `alg: none` and algorithm-confusion pitfalls."
+    },
+    {
+      "name": "jose",
+      "aliases": ["node-jose", "jws", "jwa"],
+      "category": "token",
+      "algorithms": ["JWT", "HMAC", "RSA-PSS", "RSA-OAEP", "ECDSA", "ECDH", "Ed25519", "AES-GCM"],
+      "risk": "low",
+      "description": "Modern JOSE/JWT implementation with strict algorithm handling."
+    },
+    {
+      "name": "passport-jwt",
+      "category": "token",
+      "algorithms": ["JWT", "HMAC"],
+      "risk": "medium"
+    },
+    {
+      "name": "uuid",
+      "aliases": ["nanoid", "short-uuid"],
+      "category": "random",
+      "algorithms": ["CSPRNG", "MD5", "SHA-1"],
+      "risk": "medium",
+      "description": "Identifier generation. v1/v3/v5 are not random; only v4 is CSPRNG-based."
+    },
+    {
+      "name": "random-bytes",
+      "aliases": ["randombytes", "secure-random", "crypto-random-string"],
+      "category": "random",
+      "algorithms": ["CSPRNG"],
+      "risk": "low"
+    },
+    {
+      "name": "seedrandom",
+      "aliases": ["chance", "faker"],
+      "category": "random",
+      "algorithms": ["PRNG"],
+      "risk": "high",
+      "description": "Deterministic, non-cryptographic randomness."
+    },
+    {
+      "name": "tls",
+      "aliases": ["https-proxy-agent", "ssl-root-cas", "node-tls"],
+      "category": "tls",
+      "algorithms": ["TLS", "RSA", "ECDH", "AES-GCM"],
+      "risk": "low"
+    },
+    {
+      "name": "helmet",
+      "category": "tls",
+      "algorithms": ["TLS"],
+      "risk": "low",
+      "description": "Sets HSTS and other transport security headers."
+    },
+    {
+      "name": "ssh2",
+      "aliases": ["node-ssh", "ssh2-sftp-client"],
+      "category": "protocol",
+      "algorithms": ["RSA", "ECDSA", "Ed25519", "ECDH", "AES-GCM", "ChaCha20-Poly1305", "HMAC"],
+      "risk": "medium"
+    },
+    {
+      "name": "xmldsigjs",
+      "aliases": ["xml-crypto", "saml2-js", "passport-saml"],
+      "category": "protocol",
+      "algorithms": ["RSA-PKCS1v1_5", "SHA-1", "SHA-256", "ECDSA"],
+      "risk": "high",
+      "description": "XML signature handling; historically prone to signature-wrapping attacks."
+    },
+    {
+      "name": "acme-client",
+      "aliases": ["greenlock", "certbot-js"],
+      "category": "protocol",
+      "algorithms": ["RSA", "ECDSA", "SHA-256", "JWT"],
+      "risk": "low"
+    },
+    {
+      "name": "ethers",
+      "aliases": ["web3", "ethereumjs-util", "bitcoinjs-lib", "@scure/bip32", "@scure/bip39"],
+      "category": "wallet",
+      "algorithms": ["secp256k1", "ECDSA", "Keccak", "SHA-256", "RIPEMD-160", "PBKDF2", "scrypt", "AES-CBC"],
+      "risk": "medium",
+      "description": "Blockchain key management; keys are long-lived and quantum-exposed."
+    },
+    {
+      "name": "mlkem",
+      "aliases": ["crystals-kyber", "kyber-crystals", "@dajiaji/mlkem"],
+      "category": "post-quantum",
+      "algorithms": ["ML-KEM"],
+      "risk": "low",
+      "description": "NIST FIPS 203 key encapsulation."
+    },
+    {
+      "name": "dilithium-crystals",
+      "aliases": ["@noble/post-quantum", "sphincs"],
+      "category": "post-quantum",
+      "algorithms": ["ML-DSA", "SLH-DSA", "ML-KEM"],
+      "risk": "low",
+      "description": "NIST FIPS 204 / 205 post-quantum signatures."
+    },
+    {
+      "name": "secure-password",
+      "category": "password-hashing",
+      "algorithms": ["Argon2"],
+      "risk": "low"
+    },
+    {
+      "name": "otplib",
+      "aliases": ["speakeasy", "otpauth"],
+      "category": "protocol",
+      "algorithms": ["HMAC", "SHA-1", "SHA-256"],
+      "risk": "medium",
+      "description": "TOTP/HOTP; RFC 6238 mandates HMAC-SHA1 by default."
+    }
+  ]
+}

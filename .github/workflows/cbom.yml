@@ -1,0 +1,37 @@
+name: CBOM
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  cbom:
+    name: Generate CBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Scan this repository
+        run: node dist/cli/bin.js scan . --out cbom-output --fail-on critical
+
+      - name: Publish CBOM summary
+        if: always()
+        run: cat cbom-output/cbom.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cbom
+          path: cbom-output/

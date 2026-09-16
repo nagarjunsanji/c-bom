@@ -1,0 +1,45 @@
+{
+  "name": "cbom-builder",
+  "version": "0.1.0",
+  "description": "Generate a Cryptography Bill of Materials (CBOM) from a Node.js package.json",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "cbom": "dist/cli/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rimraf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "npm run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "scan:example": "ts-node src/cli/bin.ts scan examples/sample-node-app --out examples/sample-node-app"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@vitest/coverage-v8": "^2.0.5",
+    "rimraf": "^5.0.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  },
+  "keywords": [
+    "cbom",
+    "cryptography",
+    "sbom",
+    "post-quantum",
+    "security"
+  ]
+}
