@@ -22,7 +22,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "scan:example": "ts-node src/cli/bin.ts scan examples/sample-node-app --out examples/sample-node-app"
+    "scan:example": "ts-node src/cli/bin.ts scan examples/second-service --out examples/second-service"
   },
   "dependencies": {
     "commander": "^12.1.0"

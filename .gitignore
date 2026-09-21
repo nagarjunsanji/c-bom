@@ -3,6 +3,6 @@ dist/
 coverage/
 *.log
 .DS_Store
-examples/sample-node-app/cbom.json
-examples/sample-node-app/cbom.md
-examples/sample-node-app/cbom.cdx.json
+examples/**/cbom.json
+examples/**/cbom.md
+examples/**/cbom.cdx.json
