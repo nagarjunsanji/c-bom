@@ -1,5 +1,7 @@
 export type RiskLevel = 'none' | 'low' | 'medium' | 'high' | 'critical';
 
+export type CryptoHealthStatus = 'healthy' | 'needs-attention' | 'at-risk' | 'migration-needed';
+
 export type DependencyScope = 'dependencies' | 'devDependencies';
 
 export type CryptoCategory =
@@ -107,18 +109,8 @@ export interface CbomComponent {
   quantumVulnerable: boolean;
   algorithmDetails: AlgorithmFinding[];
   parentPackages: string[];
-  vulnerabilities?: CveFinding[];
   description?: string;
   url?: string;
-}
-
-export interface CveFinding {
-  id: string;
-  description: string;
-  published?: string;
-  lastModified?: string;
-  severity?: string;
-  score?: number;
 }
 
 export interface CbomSummary {
@@ -128,6 +120,18 @@ export interface CbomSummary {
   quantumVulnerableAlgorithms: string[];
   riskBreakdown: Record<RiskLevel, number>;
   highestRisk: RiskLevel;
+  health: CryptoHealth;
+}
+
+export interface CryptoHealth {
+  score: number;
+  status: CryptoHealthStatus;
+  deprecatedDependencies: string[];
+  highRiskProductionComponents: string[];
+  highRiskDevelopmentComponents: string[];
+  mediumRiskComponents: string[];
+  quantumMigrationCandidates: string[];
+  unreviewedQuantumFindings: string[];
 }
 
 export interface CbomMetadata {

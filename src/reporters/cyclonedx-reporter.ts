@@ -145,13 +145,6 @@ function libraryComponent(component: CbomComponent): CycloneDxComponent {
   if (component.scope === 'devDependencies') {
     properties.push({ name: 'cdx:npm:package:development', value: 'true' });
   }
-  if (component.vulnerabilities?.length) {
-    properties.push({ name: 'cbom:cveCount', value: String(component.vulnerabilities.length) });
-    properties.push({
-      name: 'cbom:cveIds',
-      value: component.vulnerabilities.map((vulnerability) => vulnerability.id).join(','),
-    });
-  }
 
   return {
     type: 'library',
@@ -225,6 +218,12 @@ export function toCycloneDx(cbom: Cbom): CycloneDxBom {
           value: summary.quantumVulnerableAlgorithms.join(','),
         },
         { name: 'cbom:summary:highestRisk', value: summary.highestRisk },
+        { name: 'cbom:health:score', value: String(summary.health.score) },
+        { name: 'cbom:health:status', value: summary.health.status },
+        {
+          name: 'cbom:health:quantumMigrationCandidates',
+          value: summary.health.quantumMigrationCandidates.join(','),
+        },
       ],
     },
     components: [...libraries, ...algorithms.values()],

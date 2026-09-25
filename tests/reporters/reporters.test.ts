@@ -40,12 +40,60 @@ describe('markdownReporter', () => {
     expect(output).toContain('| Crypto dependencies | 2 |');
     expect(output).toContain('High-risk algorithms');
     expect(output).toContain('Quantum-vulnerable algorithms');
+    expect(output).toContain('Crypto health');
+    expect(output).toContain('At risk');
   });
 
   it('lists each crypto component', () => {
     expect(output).toContain('`crypto-js`');
     expect(output).toContain('`md5`');
     expect(output).not.toContain('`express`');
+  });
+
+  it('includes descriptions and recommended actions for components and assets', () => {
+    expect(output).toContain('| Description | Next action |');
+    expect(output).toContain('hash cryptographic primitive.');
+    expect(output).toContain('Replace deprecated dependency.');
+    expect(output).toContain('Replace or disable the weak algorithm.');
+  });
+
+  it('limits post-quantum migration advice to vulnerable asymmetric primitives', () => {
+    const outputWithQuantumFindings = markdownReporter.render({
+      ...cbom,
+      components: [
+        {
+          ...cbom.components[0]!,
+          deprecated: false,
+          risk: 'medium',
+          quantumVulnerable: true,
+          algorithmDetails: [
+            {
+              ...cbom.components[0]!.algorithmDetails[0]!,
+              risk: 'medium',
+              quantumVulnerable: true,
+              primitive: 'hash',
+            },
+          ],
+        },
+        {
+          ...cbom.components[1]!,
+          deprecated: false,
+          risk: 'medium',
+          quantumVulnerable: true,
+          algorithmDetails: [
+            {
+              ...cbom.components[1]!.algorithmDetails[0]!,
+              risk: 'medium',
+              quantumVulnerable: true,
+              primitive: 'pke',
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(outputWithQuantumFindings).toContain('Validate the quantum-vulnerability classification.');
+    expect(outputWithQuantumFindings).toContain('Assess a post-quantum migration.');
   });
 
   it('renders an empty-state message', () => {

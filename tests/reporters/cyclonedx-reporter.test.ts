@@ -73,6 +73,9 @@ describe('CycloneDX document', () => {
     expect(properties['cbom:summary:quantumVulnerableAlgorithms']).toContain('RSA');
     expect(properties['cbom:summary:highRiskAlgorithms']).toContain('MD5');
     expect(properties['cbom:summary:highestRisk']).toBe('critical');
+    expect(properties['cbom:health:score']).toBe('10');
+    expect(properties['cbom:health:status']).toBe('at-risk');
+    expect(properties['cbom:health:quantumMigrationCandidates']).toBe('@noble/curves,node-rsa');
   });
 
   it('emits library components only for crypto dependencies', () => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   analyzeDependencies,
   analyzeDependency,
+  assessCryptoHealth,
   buildCbom,
   resolveAlgorithm,
   summarize,
@@ -118,6 +119,37 @@ describe('summarize', () => {
   });
 });
 
+describe('assessCryptoHealth', () => {
+  it('reports a healthy score for modern cryptography', () => {
+    const health = assessCryptoHealth(analyzeDependencies([dep('bcrypt')], index));
+    expect(health).toMatchObject({ score: 100, status: 'healthy' });
+  });
+
+  it('reports deprecated and production high-risk cryptography as at risk', () => {
+    const health = assessCryptoHealth(analyzeDependencies([dep('crypto-js')], index));
+    expect(health).toMatchObject({ score: 45, status: 'at-risk' });
+    expect(health.deprecatedDependencies).toEqual(['crypto-js']);
+    expect(health.highRiskProductionComponents).toEqual(['crypto-js']);
+  });
+
+  it('separates post-quantum migration from immediate risk', () => {
+    const component = analyzeDependency(dep('node-rsa'), index)!;
+    const health = assessCryptoHealth([{
+      ...component,
+      risk: 'medium',
+      algorithmDetails: component.algorithmDetails.map((algorithm) => ({ ...algorithm, risk: 'medium' })),
+    }]);
+
+    expect(health).toMatchObject({ score: 85, status: 'migration-needed' });
+    expect(health.quantumMigrationCandidates).toEqual(['node-rsa']);
+  });
+
+  it('flags medium risk cryptography for attention', () => {
+    const health = assessCryptoHealth(analyzeDependencies([dep('jsonwebtoken')], index));
+    expect(health).toMatchObject({ score: 95, status: 'needs-attention' });
+  });
+});
+
 describe('buildCbom', () => {
   const scan: ScanResult = {
     projectName: 'demo',
@@ -134,6 +166,7 @@ describe('buildCbom', () => {
     expect(cbom.metadata.project.name).toBe('demo');
     expect(cbom.summary.totalDependencies).toBe(2);
     expect(cbom.summary.cryptoDependencies).toBe(1);
+    expect(cbom.summary.health).toMatchObject({ status: 'needs-attention', score: 95 });
     expect(cbom.components[0]?.package).toBe('jsonwebtoken');
   });
 });

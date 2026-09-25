@@ -26,7 +26,7 @@ cbom scan <path>
 | `-f, --format <formats>` | Comma separated formats: `cyclonedx` (alias `cdx`), `md` (default `md,cyclonedx`; `json` remains available explicitly) |
 | `--no-dev` | Ignore `devDependencies` |
 | `--db <path>` | Use a custom crypto package database |
-| `--live` | Use Groq for crypto classification and NVD for current CVE data |
+| `--live` | Use Groq for crypto classification and transitive dependency analysis |
 | `--fail-on <risk>` | Exit code `1` when the highest component risk reaches `low\|medium\|high\|critical` |
 | `-q, --quiet` | Suppress the console summary |
 
@@ -38,13 +38,41 @@ node dist/cli/bin.js scan examples/sample-node-app --out ./reports --fail-on hig
 
 ### Live enrichment
 
-Set `GROQ_API_KEY` and `NVD_API_KEY` in a local `.env` file, then run:
+Set `GROQ_API_KEY` in a local `.env` file, then run:
 
 ```bash
 cbom scan . --live
 ```
 
-Live mode uses Groq to classify cryptographic package capabilities and the NVD API to attach current CVE findings to matched CBOM components. Groq output is schema-validated, but it is not authoritative security data; review classifications and NVD keyword matches before using them for policy decisions.
+Live mode resolves a bounded transitive dependency graph and uses Groq to classify cryptographic package capabilities. Groq output is schema-validated, but it is not authoritative security data; review classifications before using them for policy decisions.
+
+### Reading the Markdown report
+
+`cbom.md` includes an inventory of cryptographic components and assets. Component rows include the resolved and declared package versions, dependency scope, parent packages, a short description, and a recommended action. Asset rows include the cryptographic primitive, risk, quantum indicator, NIST post-quantum security level where known, and OID where available.
+
+Recommended actions are evidence-based:
+
+- Deprecated dependencies should be replaced.
+- High- and critical-risk algorithms should be replaced or disabled.
+- Post-quantum migration advice is limited to quantum-vulnerable public-key, signature, and key-agreement primitives.
+- Other unexpected quantum flags require classification review rather than an automatic migration decision.
+
+The report identifies package capabilities; it does not prove that an application invokes a particular algorithm at runtime.
+
+### Crypto health
+
+Each CBOM includes a deterministic `0-100` crypto-health score, a status, and the component lists that contributed to it. The score starts at `100` and is reduced for each finding:
+
+| Finding | Deduction |
+| --- | --- |
+| Deprecated dependency | 30 |
+| High- or critical-risk production component | 25 |
+| High- or critical-risk development component | 10 |
+| Medium-risk component | 5 |
+| Post-quantum migration candidate | 10 |
+| Quantum finding that needs classification review | 5 |
+
+Scores do not fall below `0`. A project is `at-risk` when it has a deprecated dependency or a high-risk production component; otherwise it is `migration-needed` for a post-quantum candidate, `needs-attention` for remaining findings, or `healthy` when no deductions apply. The score is a crypto posture indicator, not a general project-health score.
 
 Produces:
 
@@ -146,13 +174,13 @@ Each component additionally carries `scope`, `declaredVersion`, `deprecated`,
 - **Crypto dependencies** — entries matched in the database
 - **High-risk algorithms** — algorithms rated `high` or `critical` (MD5, SHA-1, RC4, DES…)
 - **Quantum-vulnerable algorithms** — primitives broken by Shor's algorithm (RSA, ECDSA, ECDH, DH…)
+- **Crypto health** — deterministic score and status based on risk, deprecation, scope, and post-quantum migration evidence
 - Risk breakdown per level and the highest component risk
 
 ## Database
 
-The default scan is live-only and does not ship a crypto package catalog. Use `--live`
-to classify packages with Groq and enrich matched packages with current NVD findings.
-You can also pass an organization-maintained catalog with `--db`.
+The default scan does not ship a crypto package catalog. Use `--live` to classify
+packages with Groq, or pass an organization-maintained catalog with `--db`.
 
 For any supplied catalog, a package's risk is the maximum of its baseline risk and the
 risk of every algorithm it exposes. The database contains `algorithms` metadata and

@@ -13,4 +13,6 @@ npm run build
 node dist/cli/bin.js scan examples/sample-node-app
 ```
 
-This writes `cbom.json` and `cbom.md` next to the sample `package.json`.
+This writes `cbom.cdx.json` and `cbom.md` next to the sample `package.json`.
+
+The Markdown report distinguishes declared package ranges from resolved versions, includes remediation guidance, and summarizes crypto health on a `0-100` scale. High- and critical-risk algorithms should be reviewed first; a post-quantum action applies only to vulnerable asymmetric primitives.

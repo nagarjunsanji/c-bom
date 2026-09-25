@@ -24,6 +24,7 @@ function printSummary(io: CliIO, result: ReturnType<typeof runScan>): void {
   io.log(`  High-risk algorithms:         ${summary.highRiskAlgorithms.length}`);
   io.log(`  Quantum-vulnerable algorithms: ${summary.quantumVulnerableAlgorithms.length}`);
   io.log(`  Highest component risk:       ${summary.highestRisk}`);
+  io.log(`  Crypto health:                ${summary.health.status} (${summary.health.score}/100)`);
   for (const file of result.files) {
     io.log(`  Wrote ${relative(process.cwd(), file) || file}`);
   }
@@ -50,7 +51,7 @@ export function createProgram(io: CliIO = defaultIO): Command {
     .option('--no-dev', 'ignore devDependencies')
     .option('--db <path>', 'path to a custom crypto package database')
     .option('--fail-on <risk>', 'exit with code 1 when the highest risk reaches this level')
-    .option('--live', 'use Groq for crypto classification and NVD for current CVE data')
+    .option('--live', 'use Groq for crypto classification and transitive dependency analysis')
     .option('-q, --quiet', 'suppress the console summary', false)
     .action(async (target: string, options: ScanCommandOptions & { quiet?: boolean }) => {
       const result = options.live ? await runLiveScan(target, options) : runScan(target, options);

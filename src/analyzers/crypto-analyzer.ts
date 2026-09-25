@@ -10,6 +10,7 @@ import type {
   ScanResult,
 } from '../types';
 import { CBOM_SPEC_VERSION, TOOL_NAME, TOOL_VERSION } from '../version';
+import { assessCryptoHealth } from './health';
 import { emptyRiskBreakdown, isAtLeast, maxRisk, riskScore } from './risk';
 
 const UNKNOWN_ALGORITHM: AlgorithmDefinition = {
@@ -47,7 +48,6 @@ export interface AnalyzeOptions {
   index?: CryptoPackageIndex;
   /** Overrides the generation timestamp; useful for deterministic snapshots. */
   generatedAt?: string;
-  vulnerabilities?: Record<string, import('../types').CveFinding[]>;
 }
 
 export function resolveAlgorithm(name: string, index: CryptoPackageIndex): AlgorithmFinding {
@@ -130,15 +130,13 @@ export function summarize(
     quantumVulnerableAlgorithms: [...quantumVulnerable].sort(),
     riskBreakdown,
     highestRisk: maxRisk(...components.map((component) => component.risk)),
+    health: assessCryptoHealth(components),
   };
 }
 
 export function buildCbom(scan: ScanResult, options: AnalyzeOptions = {}): Cbom {
   const index = options.index ?? createIndex();
-  const components = analyzeDependencies(scan.dependencies, index).map((component) => {
-    const vulnerabilities = options.vulnerabilities?.[component.package];
-    return vulnerabilities?.length ? { ...component, vulnerabilities } : component;
-  });
+  const components = analyzeDependencies(scan.dependencies, index);
 
   return {
     bomFormat: 'CBOM',

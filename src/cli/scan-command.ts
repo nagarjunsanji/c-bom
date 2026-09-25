@@ -8,7 +8,6 @@ import { writeReports, resolveFormatId } from '../reporters';
 import { scanPackageJson } from '../scanners';
 import type { Cbom, RiskLevel } from '../types';
 import { buildLiveDatabase } from '../live/groq-client';
-import { findNvdCves } from '../live/nvd-client';
 import { resolveLiveDependencies } from '../live/npm-client';
 
 export interface ScanCommandOptions {
@@ -67,8 +66,8 @@ export function runScan(target: string, options: ScanCommandOptions = {}): ScanC
 }
 
 export async function runLiveScan(target: string, options: ScanCommandOptions = {}): Promise<ScanCommandResult> {
-  if (!process.env.GROQ_API_KEY || !process.env.NVD_API_KEY) {
-    throw new CbomError('Live scanning requires GROQ_API_KEY and NVD_API_KEY.', 'ELIVECONFIG');
+  if (!process.env.GROQ_API_KEY) {
+    throw new CbomError('Live scanning requires GROQ_API_KEY.', 'ELIVECONFIG');
   }
   const formats = parseFormats(options.format);
   const threshold = parseFailOn(options.failOn);
@@ -81,19 +80,7 @@ export async function runLiveScan(target: string, options: ScanCommandOptions = 
     fallback,
   );
   const index = createIndex(database);
-  const preliminary = buildCbom(scan, { index });
-  const vulnerabilities = Object.fromEntries(
-    await Promise.all(
-      preliminary.components.map(async (component) => {
-        try {
-          return [component.package, await findNvdCves(component.package)] as const;
-        } catch {
-          return [component.package, []] as const;
-        }
-      }),
-    ),
-  );
-  const cbom = buildCbom(scan, { index, vulnerabilities });
+  const cbom = buildCbom(scan, { index });
   const outputDir = options.out ?? dirname(scan.manifestPath);
   const files = writeReports(cbom, outputDir, formats);
   const exitCode = threshold && isAtLeast(cbom.summary.highestRisk, threshold) ? 1 : 0;

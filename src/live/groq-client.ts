@@ -143,7 +143,7 @@ export async function assessPackageWithGroq(
         {
           role: 'system',
           content:
-            'Classify npm package cryptographic capabilities. Return only JSON. Treat hashing, checksums, random number generation, encryption, key derivation, signatures, key exchange, tokens, TLS, wallets, and crypto protocols as cryptographic capabilities. Do not invent CVEs. If the package has none of those capabilities, set isCryptographicPackage to false, category to unknown, and algorithms to [].',
+            'Classify npm package cryptographic capabilities. Return only JSON. Treat hashing, checksums, random number generation, encryption, key derivation, signatures, key exchange, tokens, TLS, wallets, and crypto protocols as cryptographic capabilities. If the package has none of those capabilities, set isCryptographicPackage to false, category to unknown, and algorithms to [].',
         },
         {
           role: 'user',
