@@ -108,10 +108,16 @@ export function scanPackageJson(target: string, options: ScanOptions = {}): Scan
   const manifestPath = resolveManifestPath(target);
   const manifest = readManifest(manifestPath);
 
+  const dependencies = extractDependencies(manifest, options);
+  const projectName = manifest.name ?? basename(dirname(manifestPath));
+
   return {
-    projectName: manifest.name ?? basename(dirname(manifestPath)),
+    projectName,
     projectVersion: manifest.version ?? '0.0.0',
     manifestPath,
-    dependencies: extractDependencies(manifest, options),
+    dependencies: dependencies.map((dependency) => ({
+      ...dependency,
+      parentPackages: [projectName],
+    })),
   };
 }

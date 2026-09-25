@@ -145,6 +145,13 @@ function libraryComponent(component: CbomComponent): CycloneDxComponent {
   if (component.scope === 'devDependencies') {
     properties.push({ name: 'cdx:npm:package:development', value: 'true' });
   }
+  if (component.vulnerabilities?.length) {
+    properties.push({ name: 'cbom:cveCount', value: String(component.vulnerabilities.length) });
+    properties.push({
+      name: 'cbom:cveIds',
+      value: component.vulnerabilities.map((vulnerability) => vulnerability.id).join(','),
+    });
+  }
 
   return {
     type: 'library',

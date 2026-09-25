@@ -2,17 +2,16 @@
 
 This document describes how the `cbom-builder` project generates a Cryptography Bill of Materials (CBOM) and assesses cryptographic risk for Node.js applications. The resulting inventory can also provide context for future CVE prioritization workflows.
 
-The current implementation is Phase-1. It scans a Node.js `package.json`, identifies known cryptographic packages from a local database, assesses algorithm risk, and exports a CycloneDX 1.6 CBOM. AI-based CVE prioritization, lockfile analysis, transitive dependency analysis, and source-code scanning are integration opportunities for later phases.
+The default implementation scans a Node.js `package.json` and exports a CycloneDX 1.6 CBOM plus a Markdown report. The opt-in `--live` mode resolves a bounded transitive npm dependency graph, uses Groq for cryptographic package classification, and queries NVD for current CVE enrichment. Lockfile analysis and source-code scanning remain future work.
 
 ## 🎯 Executive Summary
 
-`cbom-builder` generates a cryptographic inventory for Node.js applications. It reads a target project's `package.json`, extracts `dependencies` and `devDependencies`, matches package names and aliases against a local crypto package database, and produces:
+`cbom-builder` generates a cryptographic inventory for Node.js applications. It reads a target project's `package.json`, extracts `dependencies` and `devDependencies`, and in live mode enriches bounded transitive dependencies with npm, Groq, and NVD data. It produces:
 
 - `cbom.cdx.json`: CycloneDX 1.6 CBOM output
-- `cbom.json`: native risk-oriented CBOM output
 - `cbom.md`: human-readable report
 
-The CBOM identifies cryptographic packages, algorithms, risk levels, deprecated primitives, and quantum-vulnerable algorithms. This inventory can be used as an input to a broader CVE prioritization system that combines software vulnerabilities with cryptographic exposure and application context.
+The CBOM identifies cryptographic packages, algorithms, risk levels, deprecated primitives, quantum-vulnerability indicators, parent packages, and available CVE findings. This inventory can be used as an input to a broader CVE prioritization system that combines software vulnerabilities with cryptographic exposure and application context.
 
 ## 🚨 The Problem We're Solving
 
@@ -28,12 +27,13 @@ A CVE score alone does not answer these questions. A package with no current CVE
 
 ## 💡 Our Solution
 
-The project provides a deterministic CBOM generation pipeline:
+The project provides a CBOM generation pipeline:
 
 ```text
 package.json
     -> package.json scanner
-    -> crypto package and alias matching
+    -> npm dependency resolution
+    -> Groq crypto capability classification or custom database matching
     -> algorithm enrichment
     -> risk and quantum-vulnerability analysis
     -> CycloneDX / JSON / Markdown reports
@@ -41,7 +41,7 @@ package.json
 
 The analyzer calculates a component's risk as the highest value among the package baseline risk and the algorithms exposed by that package. It also records whether any algorithm is quantum-vulnerable.
 
-This output can become one signal in a future prioritization model alongside CVSS, EPSS, exploit availability, asset criticality, reachability, deployment exposure, and remediation availability.
+In live mode, this output can become one signal in a future prioritization model alongside CVSS, EPSS, exploit availability, asset criticality, deployment exposure, and remediation availability. Groq classifications and NVD keyword matches require review.
 
 ## 🏗️ System Architecture
 
@@ -53,7 +53,7 @@ src/
   scanners/   package.json discovery and dependency extraction
   analyzers/  crypto matching, algorithm enrichment, and risk scoring
   reporters/  CycloneDX, native JSON, and Markdown reporters
-  database/   local crypto package and algorithm catalog
+  database/   optional custom database loading and indexed lookup
   types.ts    shared domain types
 ```
 
@@ -61,11 +61,12 @@ The main pipeline is:
 
 1. `src/scanners/package-json-scanner.ts` resolves a directory or direct `package.json` path.
 2. Dependencies are represented as `{ name, declaredVersion, version, scope }`.
-3. `src/database/index.ts` creates a case-insensitive index of package names and aliases.
-4. `src/analyzers/crypto-analyzer.ts` creates CBOM components for matched packages.
-5. Risk, high-risk algorithms, and quantum-vulnerable algorithms are summarized.
-6. `src/reporters/cyclonedx-reporter.ts` creates a CycloneDX 1.6 document.
-7. The CLI writes the selected reports to the output directory.
+4. `src/live/npm-client.ts` resolves bounded transitive dependencies in live mode.
+5. `src/live/groq-client.ts` classifies likely crypto-related packages and builds a live database.
+6. `src/analyzers/crypto-analyzer.ts` creates CBOM components and risk summaries.
+7. `src/live/nvd-client.ts` attaches available CVE findings.
+8. The reporters create CycloneDX 1.6 and Markdown output.
+9. The CLI writes the selected reports to the output directory.
 
 ## 🌟 Key Features
 
@@ -73,7 +74,7 @@ The main pipeline is:
 - CLI command: `cbom scan <path>`
 - Reads both `dependencies` and `devDependencies`
 - Optional `--no-dev` mode for production-only analysis
-- Local, offline crypto package database
+- Live Groq classification with optional custom database support
 - Case-insensitive package and alias matching
 - Package categories such as general-purpose, hashing, symmetric encryption, public-key, TLS, token, password hashing, key derivation, random, protocol, wallet, and post-quantum
 - Algorithm-level risk assessment
@@ -84,6 +85,7 @@ The main pipeline is:
 - Dependency graph from project to libraries to algorithms
 - Deterministic BOM serial number for repeatable output
 - `--fail-on` threshold for CI policy enforcement
+- Optional `--live` mode for npm transitive resolution, Groq classification, and NVD CVE enrichment
 - Custom database support through `--db <path>`
 - Unit tests and GitHub Actions for Node.js 18, 20, and 22
 
@@ -91,13 +93,15 @@ The main pipeline is:
 
 ### Current data sources
 
-The current Phase-1 implementation is intentionally offline and uses:
+Live mode uses:
 
 - The target project's `package.json`
-- `src/database/crypto-packages.json`
-- Optional user-supplied database passed with `--db`
+- npm registry metadata for bounded transitive dependency resolution
+- Groq package classification
+- NVD CVE data
+- An optional organization-maintained database passed with `--db`
 
-The local database contains package names, aliases, categories, algorithms, baseline risks, deprecation flags, descriptions, URLs, OIDs, CycloneDX primitive types, and NIST quantum security levels.
+An optional custom database can provide package names, aliases, categories, algorithms, baseline risks, deprecation flags, descriptions, URLs, OIDs, CycloneDX primitive types, and NIST quantum security levels.
 
 ### Current APIs
 
@@ -106,14 +110,15 @@ cbom scan <path>
 cbom scan <path> --format cyclonedx
 cbom scan <path> --out reports --fail-on high
 cbom scan <path> --no-dev
-cbom scan <path> --db ./custom-crypto-packages.json
+cbom scan <path> --live
+cbom scan <path> --db ./custom-crypto-db.json
 ```
 
 The programmatic API includes `generateCbom()` and `generateCycloneDxBom()` from the package entry point.
 
 ### Future integrations
 
-A complete CVE prioritization platform could add adapters for the NVD, CISA Known Exploited Vulnerabilities, EPSS, OSV, GitHub Advisory Database, package registries, lockfiles, asset inventories, and Debricked data. Those integrations are not part of the current Phase-1 implementation.
+A complete CVE prioritization platform could add adapters for CISA Known Exploited Vulnerabilities, EPSS, OSV, GitHub Advisory Database, lockfiles, asset inventories, and Debricked data. NVD and npm registry enrichment are already used by `--live`; the additional integrations are future work.
 
 ## 📊 Risk Assessment Methodology
 
@@ -131,9 +136,9 @@ component risk = max(package baseline risk, all algorithm risks)
 
 Examples:
 
-- `bcrypt` is low risk because it provides adaptive password hashing.
-- `node-rsa` is high risk because it provides RSA and legacy RSA padding options.
-- `crypto-js` is critical at the component level because its catalog entry includes severely weak or deprecated algorithms such as MD5, DES, and RC4.
+- A live classification can mark a package low risk when it provides modern password hashing or secure random generation.
+- A package exposing RSA or legacy padding can be rated high risk and quantum-vulnerable.
+- A package exposing MD5, DES, or RC4 can be rated critical at the component level.
 
 The summary includes:
 
@@ -152,13 +157,15 @@ AI prioritization is not implemented in this repository. The current CBOM is a d
 
 ### CBOM evidence available today
 
-For each cataloged cryptographic dependency, the CBOM provides:
+For each live-classified or custom-database cryptographic dependency, the CBOM provides:
 
 - Package name, declared version, best-effort resolved version, and dependency scope.
 - Package category, baseline risk, calculated component risk, and deprecation status.
 - Known algorithms and per-algorithm risk ratings.
 - Quantum-vulnerability indicators and NIST quantum security levels where available.
 - Package-to-algorithm relationships in the CycloneDX 1.6 dependency graph.
+- Parent package references for transitive dependencies.
+- NVD CVE identifiers and counts when enrichment succeeds.
 - Summary counts for crypto dependencies, high-risk algorithms, quantum-vulnerable algorithms, and risk levels.
 
 ### Future prioritization workflow
@@ -176,7 +183,7 @@ CVE severity and affected version range
 = explainable remediation priority
 ```
 
-The CBOM can raise the priority of a vulnerability affecting a cryptographic dependency or an algorithm with critical, high, deprecated, or quantum-migration concerns. It cannot currently establish runtime algorithm usage, transitive reachability, exploitability, asset criticality, or the presence of a CVE; those require additional scanners, service integrations, or application context.
+The CBOM can raise the priority of a vulnerability affecting a cryptographic dependency or an algorithm with critical, high, deprecated, or quantum-migration concerns. It does not establish runtime algorithm usage, exploitability, or asset criticality. NVD results are keyword-based and may be incomplete; those limitations require additional scanners, service integrations, or application context.
 
 Any AI-generated recommendation should identify the CVE, package and version evidence, relevant algorithm findings, data sources, decision factors, and confidence level. Human review should remain part of the remediation decision.
 
@@ -201,18 +208,19 @@ The scanner preserves the declared version range and derives a best-effort versi
 
 The current scanner does not read `package-lock.json`, `npm-shrinkwrap.json`, `yarn.lock`, or `pnpm-lock.yaml`.
 
+In `--live` mode, the npm registry is queried to resolve up to three levels of transitive dependencies. Installed lockfile versions are still not used.
+
 ### Extensibility
 
 The reporter interface allows additional output formats. The database can be extended without changing the analyzer by adding packages, aliases, algorithms, and metadata to a custom database file.
 
 ## 📊 Output Format & Visualization
 
-The default command creates three reports:
+The default command creates two reports:
 
 | File | Purpose |
 | --- | --- |
 | `cbom.cdx.json` | Machine-readable CycloneDX 1.6 CBOM |
-| `cbom.json` | Native risk-oriented CBOM model |
 | `cbom.md` | Human-readable summary and component table |
 
 The CycloneDX report represents:
@@ -224,7 +232,7 @@ The CycloneDX report represents:
 - `dependencies[]` links from project to packages and packages to algorithms
 - CBOM risk and summary values under `cbom:` properties
 
-The Markdown report is useful for reviews and Confluence publishing. The CycloneDX JSON report is intended for automation, artifact storage, and integration with SBOM/CBOM tooling.
+The Markdown report includes separate tables for cryptographic library components and cryptographic assets, including parent packages. The CycloneDX JSON report is intended for automation, artifact storage, and integration with SBOM/CBOM tooling.
 
 ## 🎨 Debricked Integration Vision
 
@@ -238,7 +246,7 @@ Potential flow:
 4. A prioritization view ranks findings using both vulnerability evidence and cryptographic impact.
 5. The result is exported to dashboards, tickets, CI checks, or a consolidated CycloneDX artifact.
 
-The current repository does not call Debricked APIs or transmit project data externally.
+The current repository does not call Debricked APIs. Live mode does transmit package names and versions to Groq and NVD, so it should be used only where that external data flow is acceptable.
 
 ## 📈 Results & Impact
 
@@ -284,20 +292,20 @@ Join the package references in the CBOM with CVE findings from an SCA platform t
 
 The implementation supports security and compliance workflows by providing:
 
-- A documented local crypto package catalog
+- Live classification evidence and optional custom database support
 - Explicit algorithm-level metadata
 - Traceable package-to-algorithm relationships
 - CycloneDX 1.6 interoperability
 - Repeatable output suitable for CI artifacts
-- No network access during scanning
+- Offline operation is available only when a custom database is supplied; `--live` intentionally calls npm, Groq, and NVD
 - Custom database support for organization-specific packages
 - Risk and quantum-vulnerability properties that can be reviewed or governed
 
 Important limitations:
 
-- The current database is curated and finite.
+- Live classifications depend on package names, model responses, API availability, and response validation.
 - Package capability is reported; actual runtime use is not proven.
-- Transitive dependencies are not resolved in Phase-1.
+- Live mode resolves a bounded transitive graph; non-live mode analyzes declared dependencies only.
 - Installed lockfile versions are not used.
 - No source-code, certificate, key-material, or configuration scanning is performed.
 - Risk labels are CBOM-specific and should not be treated as CVSS scores.
@@ -318,11 +326,11 @@ No. Phase-1 only reads `package.json`. Source-code scanning is planned for a lat
 
 ### Does it scan transitive dependencies?
 
-No. Lockfile and transitive dependency analysis are planned for a later phase.
+Lockfiles are not read. Live mode resolves up to three npm registry dependency levels, but installed lockfile versions and complete reachability are not established.
 
 ### Does a listed algorithm mean the application uses it?
 
-No. A listed algorithm means the matched package is cataloged as providing that capability. Runtime or call-site usage is not established.
+No. A listed algorithm means a live classifier or custom database attributes that capability to the package. Runtime or call-site usage is not established.
 
 ### Can the package database be customized?
 
@@ -341,7 +349,7 @@ CycloneDX summary metrics are stored as `cbom:summary:*` properties under `metad
 ### Project references
 
 - Project README
-- Crypto package database
+- Optional custom database format
 - Package JSON scanner
 - Crypto analyzer
 - CycloneDX reporter
@@ -362,6 +370,6 @@ CycloneDX summary metrics are stored as `cbom:summary:*` properties under `metad
 
 ## 🎉 Conclusion
 
-`cbom-builder` establishes the cryptographic inventory layer for a broader AI-powered CVE prioritization system. Its Phase-1 implementation is local, deterministic, testable, and compatible with CycloneDX 1.6.
+`cbom-builder` establishes a live-enrichment cryptographic inventory layer for a broader CVE prioritization system. Its CBOM generation is testable and compatible with CycloneDX 1.6, while live results depend on external APIs and require review.
 
-The project currently answers which known cryptographic dependencies and algorithms are present in a Node.js project's declared dependencies. The next steps are lockfile and transitive analysis, source-code usage detection, certificate and key-material discovery, external vulnerability correlation, and explainable prioritization that combines CBOM evidence with CVE intelligence.
+The project identifies cryptographic dependencies and algorithms from declared and, in live mode, bounded transitive npm dependencies. Next steps include lockfile-aware resolution, source-code usage detection, certificate and key-material discovery, stronger advisory correlation, and explainable prioritization that combines CBOM evidence with CVE intelligence.

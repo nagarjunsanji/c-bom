@@ -4,7 +4,7 @@ import { Command } from 'commander';
 
 import { CbomError } from '../errors';
 import { TOOL_NAME, TOOL_VERSION } from '../version';
-import { runScan, DEFAULT_FORMATS, type ScanCommandOptions } from './scan-command';
+import { runLiveScan, runScan, DEFAULT_FORMATS, type ScanCommandOptions } from './scan-command';
 
 export interface CliIO {
   log(message: string): void;
@@ -44,15 +44,16 @@ export function createProgram(io: CliIO = defaultIO): Command {
     .option('-o, --out <dir>', 'output directory (defaults to the scanned project directory)')
     .option(
       '-f, --format <formats>',
-      'comma separated output formats: json,md,cyclonedx',
+      'comma separated output formats: md,cyclonedx (json remains available explicitly)',
       DEFAULT_FORMATS,
     )
     .option('--no-dev', 'ignore devDependencies')
     .option('--db <path>', 'path to a custom crypto package database')
     .option('--fail-on <risk>', 'exit with code 1 when the highest risk reaches this level')
+    .option('--live', 'use Groq for crypto classification and NVD for current CVE data')
     .option('-q, --quiet', 'suppress the console summary', false)
-    .action((target: string, options: ScanCommandOptions & { quiet?: boolean }) => {
-      const result = runScan(target, options);
+    .action(async (target: string, options: ScanCommandOptions & { quiet?: boolean }) => {
+      const result = options.live ? await runLiveScan(target, options) : runScan(target, options);
       if (!options.quiet) {
         printSummary(io, result);
       }
@@ -65,9 +66,9 @@ export function createProgram(io: CliIO = defaultIO): Command {
   return program;
 }
 
-export function run(argv: string[] = process.argv, io: CliIO = defaultIO): void {
+export async function run(argv: string[] = process.argv, io: CliIO = defaultIO): Promise<void> {
   try {
-    createProgram(io).parse(argv);
+    await createProgram(io).parseAsync(argv);
   } catch (error) {
     if (error instanceof CbomError) {
       io.error(`error: ${error.message}`);

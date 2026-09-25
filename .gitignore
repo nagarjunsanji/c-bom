@@ -3,6 +3,9 @@ dist/
 coverage/
 *.log
 .DS_Store
+.env
+.env.*
+!.env.example
 examples/**/cbom.json
 examples/**/cbom.md
 examples/**/cbom.cdx.json

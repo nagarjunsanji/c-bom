@@ -7,6 +7,9 @@ import { CbomError } from '../errors';
 import { writeReports, resolveFormatId } from '../reporters';
 import { scanPackageJson } from '../scanners';
 import type { Cbom, RiskLevel } from '../types';
+import { buildLiveDatabase } from '../live/groq-client';
+import { findNvdCves } from '../live/nvd-client';
+import { resolveLiveDependencies } from '../live/npm-client';
 
 export interface ScanCommandOptions {
   out?: string;
@@ -14,6 +17,7 @@ export interface ScanCommandOptions {
   dev?: boolean;
   db?: string;
   failOn?: string;
+  live?: boolean;
 }
 
 export interface ScanCommandResult {
@@ -22,7 +26,7 @@ export interface ScanCommandResult {
   exitCode: number;
 }
 
-export const DEFAULT_FORMATS = 'json,md,cyclonedx';
+export const DEFAULT_FORMATS = 'md,cyclonedx';
 
 export function parseFormats(format = DEFAULT_FORMATS): string[] {
   const ids = format
@@ -59,5 +63,39 @@ export function runScan(target: string, options: ScanCommandOptions = {}): ScanC
 
   const exitCode = threshold && isAtLeast(cbom.summary.highestRisk, threshold) ? 1 : 0;
 
+  return { cbom, files, exitCode };
+}
+
+export async function runLiveScan(target: string, options: ScanCommandOptions = {}): Promise<ScanCommandResult> {
+  if (!process.env.GROQ_API_KEY || !process.env.NVD_API_KEY) {
+    throw new CbomError('Live scanning requires GROQ_API_KEY and NVD_API_KEY.', 'ELIVECONFIG');
+  }
+  const formats = parseFormats(options.format);
+  const threshold = parseFailOn(options.failOn);
+  const initialScan = scanPackageJson(target, { includeDev: options.dev ?? true });
+  const dependencies = await resolveLiveDependencies(initialScan.dependencies);
+  const scan = { ...initialScan, dependencies };
+  const fallback = loadDatabase(options.db);
+  const database = await buildLiveDatabase(
+    scan.dependencies.map(({ name, version }) => ({ name, version })),
+    fallback,
+  );
+  const index = createIndex(database);
+  const preliminary = buildCbom(scan, { index });
+  const vulnerabilities = Object.fromEntries(
+    await Promise.all(
+      preliminary.components.map(async (component) => {
+        try {
+          return [component.package, await findNvdCves(component.package)] as const;
+        } catch {
+          return [component.package, []] as const;
+        }
+      }),
+    ),
+  );
+  const cbom = buildCbom(scan, { index, vulnerabilities });
+  const outputDir = options.out ?? dirname(scan.manifestPath);
+  const files = writeReports(cbom, outputDir, formats);
+  const exitCode = threshold && isAtLeast(cbom.summary.highestRisk, threshold) ? 1 : 0;
   return { cbom, files, exitCode };
 }

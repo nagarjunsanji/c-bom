@@ -5,6 +5,7 @@ import { createIndex } from '../../src/database';
 import { cycloneDxReporter, toCycloneDx, toPurl } from '../../src/reporters';
 import type { CycloneDxBom } from '../../src/reporters';
 import type { ScanResult } from '../../src/types';
+import { TEST_DATABASE } from '../fixtures/crypto-database';
 
 const scan: ScanResult = {
   projectName: 'demo',
@@ -18,7 +19,7 @@ const scan: ScanResult = {
   ],
 };
 
-const cbom = buildCbom(scan, { index: createIndex(), generatedAt: '2026-01-01T00:00:00.000Z' });
+const cbom = buildCbom(scan, { index: createIndex(TEST_DATABASE), generatedAt: '2026-01-01T00:00:00.000Z' });
 const bom: CycloneDxBom = toCycloneDx(cbom);
 
 function componentByRef(ref: string) {

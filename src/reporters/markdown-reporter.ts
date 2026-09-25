@@ -21,14 +21,31 @@ function list(values: string[]): string {
 function componentRow(component: CbomComponent): string {
   const cells = [
     `\`${component.package}\``,
+    component.parentPackages.length
+      ? component.parentPackages.map((parent) => `\`${parent}\``).join(', ')
+      : '_unknown_',
     component.version,
     component.category,
     escapeCell(component.algorithms.join(', ')),
     RISK_LABEL[component.risk],
     component.quantumVulnerable ? 'Yes' : 'No',
     component.scope === 'devDependencies' ? 'dev' : 'prod',
+    String(component.vulnerabilities?.length ?? 0),
   ];
   return `| ${cells.join(' | ')} |`;
+}
+
+function algorithmRows(components: CbomComponent): string[] {
+  return components.algorithmDetails.map((algorithm) => {
+    const parents = `\`${components.package}\``;
+    return [
+      `\`${algorithm.name}\``,
+      algorithm.primitive,
+      RISK_LABEL[algorithm.risk],
+      algorithm.quantumVulnerable ? 'Yes' : 'No',
+      parents,
+    ].join(' | ');
+  });
 }
 
 export const markdownReporter: Reporter = {
@@ -76,10 +93,26 @@ export const markdownReporter: Reporter = {
       lines.push('_No cryptographic dependencies were identified._');
       lines.push('');
     } else {
-      lines.push('| Package | Version | Category | Algorithms | Risk | Quantum-vulnerable | Scope |');
-      lines.push('| --- | --- | --- | --- | --- | --- | --- |');
+      lines.push('| Package | Parent package(s) | Version | Category | Algorithms | Risk | Quantum-vulnerable | Scope | CVEs |');
+      lines.push('| --- | --- | --- | --- | --- | --- | --- | --- | --- |');
       for (const component of components) {
         lines.push(componentRow(component));
+      }
+      lines.push('');
+
+      const algorithms = new Map<string, string>();
+      for (const component of components) {
+        for (const row of algorithmRows(component)) {
+          const name = row.slice(1, row.indexOf('`', 1));
+          algorithms.set(`${name}:${component.package}`, row);
+        }
+      }
+      lines.push('## Cryptographic assets');
+      lines.push('');
+      lines.push('| Algorithm | Primitive | Risk | Quantum-vulnerable | Parent package |');
+      lines.push('| --- | --- | --- | --- | --- |');
+      for (const row of algorithms.values()) {
+        lines.push(`| ${row} |`);
       }
       lines.push('');
 

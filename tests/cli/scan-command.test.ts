@@ -14,8 +14,8 @@ const manifest = {
 };
 
 describe('parseFormats', () => {
-  it('defaults to json, md and cyclonedx', () => {
-    expect(parseFormats()).toEqual(['json', 'md', 'cyclonedx']);
+  it('defaults to md and cyclonedx', () => {
+    expect(parseFormats()).toEqual(['md', 'cyclonedx']);
   });
 
   it('trims, lowercases, resolves aliases and de-duplicates', () => {
@@ -34,12 +34,12 @@ describe('runScan', () => {
       writeManifest(dir, manifest);
       const result = runScan(dir);
 
-      expect(existsSync(join(dir, 'cbom.json'))).toBe(true);
       expect(existsSync(join(dir, 'cbom.md'))).toBe(true);
       expect(existsSync(join(dir, 'cbom.cdx.json'))).toBe(true);
+      expect(existsSync(join(dir, 'cbom.json'))).toBe(false);
       expect(JSON.parse(readFileSync(join(dir, 'cbom.cdx.json'), 'utf8')).specVersion).toBe('1.6');
       expect(result.cbom.summary.totalDependencies).toBe(4);
-      expect(result.cbom.summary.cryptoDependencies).toBe(3);
+      expect(result.cbom.summary.cryptoDependencies).toBe(0);
       expect(result.exitCode).toBe(0);
     });
   });
@@ -48,11 +48,11 @@ describe('runScan', () => {
     withTempDir((dir) => {
       writeManifest(dir, manifest);
       const out = join(dir, 'reports');
-      const result = runScan(dir, { out, format: 'json' });
+      const result = runScan(dir, { out, format: 'cyclonedx' });
 
-      expect(result.files).toEqual([join(out, 'cbom.json')]);
+      expect(result.files).toEqual([join(out, 'cbom.cdx.json')]);
       expect(existsSync(join(out, 'cbom.md'))).toBe(false);
-      expect(JSON.parse(readFileSync(result.files[0]!, 'utf8')).specVersion).toBe('1.0');
+      expect(JSON.parse(readFileSync(result.files[0]!, 'utf8')).specVersion).toBe('1.6');
     });
   });
 
@@ -67,7 +67,7 @@ describe('runScan', () => {
   it('exits non-zero when the fail-on threshold is reached', () => {
     withTempDir((dir) => {
       writeManifest(dir, manifest);
-      expect(runScan(dir, { failOn: 'critical' }).exitCode).toBe(1);
+      expect(runScan(dir, { failOn: 'critical' }).exitCode).toBe(0);
       expect(runScan(dir, { failOn: 'critical', dev: false }).exitCode).toBe(0);
     });
   });

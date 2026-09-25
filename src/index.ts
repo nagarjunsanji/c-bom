@@ -10,7 +10,7 @@ export { TOOL_NAME, TOOL_VERSION, CBOM_SPEC_VERSION } from './version';
 export * from './analyzers';
 export * from './scanners';
 export * from './reporters';
-export { BUNDLED_DATABASE, CryptoPackageIndex, createIndex, loadDatabase } from './database';
+export { EMPTY_DATABASE, CryptoPackageIndex, createIndex, loadDatabase } from './database';
 
 export interface GenerateCbomOptions {
   includeDev?: boolean;

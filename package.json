@@ -22,10 +22,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "scan:example": "ts-node src/cli/bin.ts scan examples/second-service --out examples/second-service"
+    "scan:ss": "rimraf examples/second-service/cbom.cdx.json examples/second-service/cbom.md && ts-node src/cli/bin.ts scan examples/second-service --out examples/second-service",
+    "scan:ss:live": "rimraf examples/second-service/cbom.cdx.json examples/second-service/cbom.md && ts-node src/cli/bin.ts scan examples/second-service --live --out examples/second-service",
+    "scan:sna:live": "rimraf examples/sample-node-app/cbom.cdx.json examples/sample-node-app/cbom.md && ts-node src/cli/bin.ts scan examples/sample-node-app --live --out examples/sample-node-app"
+
   },
   "dependencies": {
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "dotenv": "^18.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",

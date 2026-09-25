@@ -9,8 +9,9 @@ import {
 } from '../../src/analyzers';
 import { createIndex } from '../../src/database';
 import type { DependencyRecord, ScanResult } from '../../src/types';
+import { TEST_DATABASE } from '../fixtures/crypto-database';
 
-const index = createIndex();
+const index = createIndex(TEST_DATABASE);
 
 function dep(name: string, version = '1.0.0'): DependencyRecord {
   return { name, declaredVersion: `^${version}`, version, scope: 'dependencies' };

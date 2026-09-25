@@ -8,6 +8,7 @@ import { createIndex } from '../../src/database';
 import { getReporters, jsonReporter, markdownReporter, writeReports } from '../../src/reporters';
 import type { ScanResult } from '../../src/types';
 import { withTempDir } from '../helpers';
+import { TEST_DATABASE } from '../fixtures/crypto-database';
 
 const scan: ScanResult = {
   projectName: 'demo',
@@ -20,7 +21,7 @@ const scan: ScanResult = {
   ],
 };
 
-const cbom = buildCbom(scan, { index: createIndex(), generatedAt: '2026-01-01T00:00:00.000Z' });
+const cbom = buildCbom(scan, { index: createIndex(TEST_DATABASE), generatedAt: '2026-01-01T00:00:00.000Z' });
 
 describe('jsonReporter', () => {
   it('emits parseable, newline-terminated JSON', () => {
@@ -50,7 +51,7 @@ describe('markdownReporter', () => {
   it('renders an empty-state message', () => {
     const empty = buildCbom(
       { ...scan, dependencies: [] },
-      { index: createIndex(), generatedAt: '2026-01-01T00:00:00.000Z' },
+      { index: createIndex(TEST_DATABASE), generatedAt: '2026-01-01T00:00:00.000Z' },
     );
     expect(markdownReporter.render(empty)).toContain('No cryptographic dependencies');
   });

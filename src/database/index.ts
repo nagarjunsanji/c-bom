@@ -1,9 +1,13 @@
 import { readFileSync } from 'node:fs';
 
 import type { CryptoDatabase, CryptoPackageDefinition } from '../types';
-import bundled from './crypto-packages.json';
 
-export const BUNDLED_DATABASE = bundled as unknown as CryptoDatabase;
+export const EMPTY_DATABASE: CryptoDatabase = {
+  version: 'live-only',
+  updated: new Date(0).toISOString(),
+  algorithms: {},
+  packages: [],
+};
 
 /**
  * Case-insensitive lookup over package names and their aliases.
@@ -35,7 +39,7 @@ export class CryptoPackageIndex {
 
 export function loadDatabase(databasePath?: string): CryptoDatabase {
   if (!databasePath) {
-    return BUNDLED_DATABASE;
+    return EMPTY_DATABASE;
   }
   const raw = readFileSync(databasePath, 'utf8');
   return assertDatabase(JSON.parse(raw));
@@ -55,6 +59,6 @@ export function assertDatabase(value: unknown): CryptoDatabase {
   return db as CryptoDatabase;
 }
 
-export function createIndex(database: CryptoDatabase = BUNDLED_DATABASE): CryptoPackageIndex {
+export function createIndex(database: CryptoDatabase = EMPTY_DATABASE): CryptoPackageIndex {
   return new CryptoPackageIndex(database);
 }

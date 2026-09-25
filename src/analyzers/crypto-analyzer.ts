@@ -35,6 +35,7 @@ const PRIMITIVE_BY_TYPE: Record<string, CryptoPrimitive> = {
   token: 'other',
   protocol: 'other',
   random: 'drbg',
+  rng: 'drbg',
   encoding: 'other',
 };
 
@@ -46,6 +47,7 @@ export interface AnalyzeOptions {
   index?: CryptoPackageIndex;
   /** Overrides the generation timestamp; useful for deterministic snapshots. */
   generatedAt?: string;
+  vulnerabilities?: Record<string, import('../types').CveFinding[]>;
 }
 
 export function resolveAlgorithm(name: string, index: CryptoPackageIndex): AlgorithmFinding {
@@ -80,6 +82,7 @@ export function analyzeDependency(
     risk: maxRisk(definition.risk, ...algorithmDetails.map((a) => a.risk)),
     scope: dependency.scope,
     declaredVersion: dependency.declaredVersion,
+    parentPackages: dependency.parentPackages ?? [],
     deprecated: definition.deprecated ?? false,
     quantumVulnerable: algorithmDetails.some((a) => a.quantumVulnerable),
     algorithmDetails,
@@ -132,7 +135,10 @@ export function summarize(
 
 export function buildCbom(scan: ScanResult, options: AnalyzeOptions = {}): Cbom {
   const index = options.index ?? createIndex();
-  const components = analyzeDependencies(scan.dependencies, index);
+  const components = analyzeDependencies(scan.dependencies, index).map((component) => {
+    const vulnerabilities = options.vulnerabilities?.[component.package];
+    return vulnerabilities?.length ? { ...component, vulnerabilities } : component;
+  });
 
   return {
     bomFormat: 'CBOM',

@@ -75,6 +75,7 @@ export interface DependencyRecord {
   /** Best-effort concrete version parsed from the range. */
   version: string;
   scope: DependencyScope;
+  parentPackages?: string[];
 }
 
 export interface ScanResult {
@@ -105,8 +106,19 @@ export interface CbomComponent {
   deprecated: boolean;
   quantumVulnerable: boolean;
   algorithmDetails: AlgorithmFinding[];
+  parentPackages: string[];
+  vulnerabilities?: CveFinding[];
   description?: string;
   url?: string;
+}
+
+export interface CveFinding {
+  id: string;
+  description: string;
+  published?: string;
+  lastModified?: string;
+  severity?: string;
+  score?: number;
 }
 
 export interface CbomSummary {

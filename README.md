@@ -23,9 +23,10 @@ cbom scan <path>
 | Option | Description |
 | --- | --- |
 | `-o, --out <dir>` | Output directory (defaults to the scanned project directory) |
-| `-f, --format <formats>` | Comma separated formats: `cyclonedx` (alias `cdx`), `json`, `md` (default `json,md,cyclonedx`) |
+| `-f, --format <formats>` | Comma separated formats: `cyclonedx` (alias `cdx`), `md` (default `md,cyclonedx`; `json` remains available explicitly) |
 | `--no-dev` | Ignore `devDependencies` |
 | `--db <path>` | Use a custom crypto package database |
+| `--live` | Use Groq for crypto classification and NVD for current CVE data |
 | `--fail-on <risk>` | Exit code `1` when the highest component risk reaches `low\|medium\|high\|critical` |
 | `-q, --quiet` | Suppress the console summary |
 
@@ -35,12 +36,21 @@ Example:
 node dist/cli/bin.js scan examples/sample-node-app --out ./reports --fail-on high
 ```
 
+### Live enrichment
+
+Set `GROQ_API_KEY` and `NVD_API_KEY` in a local `.env` file, then run:
+
+```bash
+cbom scan . --live
+```
+
+Live mode uses Groq to classify cryptographic package capabilities and the NVD API to attach current CVE findings to matched CBOM components. Groq output is schema-validated, but it is not authoritative security data; review classifications and NVD keyword matches before using them for policy decisions.
+
 Produces:
 
 | File | Format |
 | --- | --- |
 | `reports/cbom.cdx.json` | CycloneDX 1.6 CBOM |
-| `reports/cbom.json` | Native CBOM (risk-oriented, easy to diff) |
 | `reports/cbom.md` | Markdown report |
 
 Emit CycloneDX only:
@@ -69,7 +79,7 @@ src/
   scanners/   package.json discovery, parsing and dependency extraction
   analyzers/  matching against the database, risk scoring, summary computation
   reporters/  pluggable renderers (cbom.cdx.json, cbom.json, cbom.md)
-  database/   crypto-packages.json + indexed lookup
+  database/   optional custom database loading and indexed lookup
 ```
 
 The pipeline is a pure function chain: `scan -> analyze -> report`. Each stage takes
@@ -140,14 +150,14 @@ Each component additionally carries `scope`, `declaredVersion`, `deprecated`,
 
 ## Database
 
-`src/database/crypto-packages.json` holds two maps:
+The default scan is live-only and does not ship a crypto package catalog. Use `--live`
+to classify packages with Groq and enrich matched packages with current NVD findings.
+You can also pass an organization-maintained catalog with `--db`.
 
-- `algorithms` — risk level, family, quantum vulnerability and optional CycloneDX
-  metadata (`primitive`, `nistQuantumSecurityLevel`, `oid`) per primitive
-- `packages` — name, aliases, category, algorithms, baseline risk, deprecation
-
-A package's risk is the maximum of its baseline risk and the risk of every algorithm it
-exposes. Extend the file (or pass `--db`) to cover internal libraries.
+For any supplied catalog, a package's risk is the maximum of its baseline risk and the
+risk of every algorithm it exposes. The database contains `algorithms` metadata and
+`packages` definitions with names, aliases, categories, algorithms, risk, and optional
+deprecation information.
 
 ## Development
 
